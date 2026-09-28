@@ -1,0 +1,64 @@
+{
+  "name": "@rhythmjs/observability",
+  "version": "0.0.1",
+  "description": "Observability middleware (logging, request ids, server timing) for Rhythm routers and handlers.",
+  "keywords": [
+    "logging",
+    "middleware",
+    "observability",
+    "request-id",
+    "rhythm",
+    "server-timing"
+  ],
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rhythmjs/observability.git"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    "./log": {
+      "types": "./dist/log/log.d.ts",
+      "default": "./dist/log/log.js"
+    },
+    "./request-id": {
+      "types": "./dist/request-id/request-id.d.ts",
+      "default": "./dist/request-id/request-id.js"
+    },
+    "./timing": {
+      "types": "./dist/timing/timing.d.ts",
+      "default": "./dist/timing/timing.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "vp pack",
+    "prepublishOnly": "vp check && vp test && vp pack",
+    "typecheck": "tsc --noEmit",
+    "test": "vp test",
+    "lint": "vp lint",
+    "fmt": "vp fmt",
+    "fmt:check": "vp fmt --check",
+    "check": "vp check"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "typescript": "^7.0.2",
+    "vite-plus": "^1.0.0"
+  },
+  "peerDependencies": {
+    "@rhythmjs/rhythm": "^0.0.1",
+    "@rhythmjs/router": "^0.0.1"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "packageManager": "pnpm@10.33.2"
+}
