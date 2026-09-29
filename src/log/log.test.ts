@@ -1,12 +1,16 @@
 import { describe, expect, test } from "vite-plus/test";
+import { Rhythm } from "@rhythmjs/rhythm";
 import { RhythmRouter } from "@rhythmjs/router";
 import { toFetchHandler } from "@rhythmjs/router/adapters/bun";
+import type { RhythmHttpContext } from "@rhythmjs/router/adapters/context";
 import { log, type LogEntry } from "./log";
+
+const serve = (router: RhythmRouter) => toFetchHandler(new Rhythm<RhythmHttpContext>().use(router.routes()));
 
 describe("log", () => {
   test("records method, path, status, and duration for a handled request", async () => {
     const entries: LogEntry[] = [];
-    const app = toFetchHandler(
+    const app = serve(
       new RhythmRouter().use(log((entry) => void entries.push(entry))).get("/users/:id", (ctx) => {
         ctx.response.status = 201;
         ctx.response.body = "ok";
@@ -25,7 +29,7 @@ describe("log", () => {
 
   test("logs one entry per request across routes", async () => {
     const entries: LogEntry[] = [];
-    const app = toFetchHandler(
+    const app = serve(
       new RhythmRouter()
         .use(log((entry) => void entries.push(entry)))
         .get("/a", (ctx) => {
@@ -45,7 +49,7 @@ describe("log", () => {
   test("logs a 500 entry with the error and rethrows when downstream throws", async () => {
     const entries: LogEntry[] = [];
     const boom = new Error("boom");
-    const app = toFetchHandler(
+    const app = serve(
       new RhythmRouter().use(log((entry) => void entries.push(entry))).get("/boom", () => {
         throw boom;
       }),
@@ -59,7 +63,7 @@ describe("log", () => {
 
   test("supports an async sink", async () => {
     const entries: LogEntry[] = [];
-    const app = toFetchHandler(
+    const app = serve(
       new RhythmRouter()
         .use(
           log(async (entry) => {

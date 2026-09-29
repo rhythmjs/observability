@@ -1,11 +1,15 @@
 import { describe, expect, test } from "vite-plus/test";
+import { Rhythm } from "@rhythmjs/rhythm";
 import { RhythmRouter } from "@rhythmjs/router";
 import { toFetchHandler } from "@rhythmjs/router/adapters/bun";
+import type { RhythmHttpContext } from "@rhythmjs/router/adapters/context";
 import { timing } from "./timing";
+
+const serve = (router: RhythmRouter) => toFetchHandler(new Rhythm<RhythmHttpContext>().use(router.routes()));
 
 describe("timing", () => {
   test("adds a server-timing header with the total duration", async () => {
-    const app = toFetchHandler(
+    const app = serve(
       new RhythmRouter().use(timing()).get("/ping", (ctx) => {
         ctx.response.body = "pong";
       }),
@@ -18,7 +22,7 @@ describe("timing", () => {
   });
 
   test("supports a custom metric name", async () => {
-    const app = toFetchHandler(
+    const app = serve(
       new RhythmRouter().use(timing("gateway")).get("/ping", (ctx) => {
         ctx.response.body = "pong";
       }),
@@ -30,7 +34,7 @@ describe("timing", () => {
   });
 
   test("appends to existing server-timing metrics instead of replacing them", async () => {
-    const app = toFetchHandler(
+    const app = serve(
       new RhythmRouter()
         .use(timing("total"))
         .use(timing("inner"))
@@ -47,7 +51,7 @@ describe("timing", () => {
   });
 
   test("measures downstream work", async () => {
-    const app = toFetchHandler(
+    const app = serve(
       new RhythmRouter().use(timing()).get("/slow", async (ctx) => {
         await new Promise((resolve) => setTimeout(resolve, 25));
         ctx.response.body = "done";
