@@ -1,6 +1,6 @@
 {
   "name": "@rhythmjs/observability",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Observability middleware (logging, request ids, server timing) for Rhythm routers and handlers.",
   "keywords": [
     "logging",
