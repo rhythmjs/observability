@@ -5,7 +5,7 @@ import { toFetchHandler } from "@rhythmjs/router/adapters/bun";
 import type { RhythmHttpContext } from "@rhythmjs/router/adapters/context";
 import { timing } from "./timing";
 
-const serve = (router: RhythmRouter) => toFetchHandler(new Rhythm<RhythmHttpContext>().use(router.routes()));
+const serve = (router: RhythmRouter) => toFetchHandler(new Rhythm<RhythmHttpContext>().use(router.middleware()));
 
 describe("timing", () => {
   test("adds a server-timing header with the total duration", async () => {

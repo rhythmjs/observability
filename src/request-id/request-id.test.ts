@@ -5,14 +5,14 @@ import { toFetchHandler } from "@rhythmjs/router/adapters/bun";
 import type { RhythmHttpContext } from "@rhythmjs/router/adapters/context";
 import { requestId, type RequestIdContext } from "./request-id";
 
-const serve = (router: RhythmRouter<any>) => toFetchHandler(new Rhythm<RhythmHttpContext>().use(router.routes()));
+const serve = (router: RhythmRouter<any>) => toFetchHandler(new Rhythm<RhythmHttpContext>().use(router.middleware()));
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{3,4}-[0-9a-f]{3,4}-[0-9a-f]{12}$/i;
 
 describe("requestId", () => {
   test("generates an id, sets the response header, and extends the context", async () => {
     const app = serve(
-      new RhythmRouter().use<RequestIdContext>(requestId()).get("/ping", (ctx) => {
+      new RhythmRouter().use(requestId()).get("/ping", (ctx) => {
         ctx.response.body = ctx.requestId;
       }),
     );
@@ -26,7 +26,7 @@ describe("requestId", () => {
 
   test("reuses an incoming request id instead of generating one", async () => {
     const app = serve(
-      new RhythmRouter().use<RequestIdContext>(requestId()).get("/ping", (ctx) => {
+      new RhythmRouter().use(requestId()).get("/ping", (ctx) => {
         ctx.response.body = ctx.requestId;
       }),
     );
@@ -39,7 +39,7 @@ describe("requestId", () => {
 
   test("generates a fresh id per request", async () => {
     const app = serve(
-      new RhythmRouter().use<RequestIdContext>(requestId()).get("/ping", (ctx) => {
+      new RhythmRouter().use(requestId()).get("/ping", (ctx) => {
         ctx.response.body = ctx.requestId;
       }),
     );
@@ -52,7 +52,7 @@ describe("requestId", () => {
 
   test("supports a custom header name", async () => {
     const app = serve(
-      new RhythmRouter().use<RequestIdContext>(requestId("x-trace-id")).get("/ping", (ctx) => {
+      new RhythmRouter().use(requestId("x-trace-id")).get("/ping", (ctx) => {
         ctx.response.body = ctx.requestId;
       }),
     );

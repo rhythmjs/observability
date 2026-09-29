@@ -5,7 +5,7 @@ import { toFetchHandler } from "@rhythmjs/router/adapters/bun";
 import type { RhythmHttpContext } from "@rhythmjs/router/adapters/context";
 import { log, type LogEntry } from "./log";
 
-const serve = (router: RhythmRouter) => toFetchHandler(new Rhythm<RhythmHttpContext>().use(router.routes()));
+const serve = (router: RhythmRouter) => toFetchHandler(new Rhythm<RhythmHttpContext>().use(router.middleware()));
 
 describe("log", () => {
   test("records method, path, status, and duration for a handled request", async () => {
