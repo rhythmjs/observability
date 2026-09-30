@@ -1,7 +1,8 @@
 # @rhythmjs/observability
 
-Observability middleware for [Rhythm](https://github.com/rhythmjs/rhythm) routers and handlers. Each module
-is exported by its own subpath — there is no root barrel export.
+Observability middleware for [Rhythm](https://github.com/rhythmjs/rhythm), the Bun-native backend
+framework: request logging, request ids, `Server-Timing`, health endpoints, and graceful shutdown.
+Each module is exported by its own subpath — there is no root barrel export.
 
 ## Install
 
@@ -101,7 +102,7 @@ gracefulShutdown({ healthService, close: () => server.close(), app });
 - `healthRoutes(service, { path? })` — a `RhythmRouter` mounting `/live` and `/ready` under `path`
   (default `/health`); compose or guard it like any router.
 - `gracefulShutdown({ healthService, close?, app?, signals?, drainMs?, timeoutMs?, exit? })` — on
-  SIGTERM/SIGINT (Node, Bun, Deno; no-op elsewhere): readiness flips to `503 shuttingDown`, waits
+  SIGTERM/SIGINT: readiness flips to `503 shuttingDown`, waits
   `drainMs` for load-balancer deregistration, closes the server, then runs the kernel's `teardown()`
   (providers dispose in reverse order). Returns the trigger function for manual invocation; a
   `timeoutMs` watchdog force-exits if teardown hangs.
