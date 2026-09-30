@@ -65,6 +65,47 @@ new RhythmRouter().use(timing()).get("/ping", (ctx) => {
 - `timing(name?)` — pass a custom metric name (default `"app"`). Multiple `timing()` layers append their
   metrics instead of replacing each other.
 
+## `@rhythmjs/observability/health`
+
+Liveness/readiness endpoints and graceful shutdown, built on the Rhythm kernel. The package ships
+**no indicators** — `HealthIndicator` is a contract, and you implement checks against your own
+services:
+
+```ts
+import { healthModule, healthRoutes, gracefulShutdown } from "@rhythmjs/observability/health";
+
+const dbIndicator: HealthIndicator = {
+  name: "postgres",
+  check: async () => (await sql`select 1`, { status: "up" }),
+};
+
+const app = new Rhythm().register(healthModule.forRoot({ indicators: [dbIndicator] }), (m) => ({
+  healthService: m.healthService,
+}));
+
+router.use(healthRoutes(healthService).middleware());
+// GET /health/live  → 200 while the process runs (never touches indicators)
+// GET /health/ready → 200, or 503 with per-check statuses in the body
+
+gracefulShutdown({ healthService, close: () => server.close(), app });
+```
+
+- `HealthIndicator` — `{ name, check(), critical?, timeout? }`; `check` returns
+  `{ status: "up" | "down", details? }`, sync or async. A throwing or hanging check reports `down`
+  (with the error message, or a per-indicator `timeout` cutoff). `critical: false` shows in the
+  report without failing readiness.
+- `healthModule.forRoot({ indicators, timeout?, cacheTtl? })` — a Rhythm module providing
+  `healthService`; export it with `register`'s second argument. Indicators run in parallel; results
+  are cached for `cacheTtl` (default 1s) so probe hammering never floods your dependencies.
+  `createHealthService(options)` builds the service directly, without the module.
+- `healthRoutes(service, { path? })` — a `RhythmRouter` mounting `/live` and `/ready` under `path`
+  (default `/health`); compose or guard it like any router.
+- `gracefulShutdown({ healthService, close?, app?, signals?, drainMs?, timeoutMs?, exit? })` — on
+  SIGTERM/SIGINT (Node, Bun, Deno; no-op elsewhere): readiness flips to `503 shuttingDown`, waits
+  `drainMs` for load-balancer deregistration, closes the server, then runs the kernel's `teardown()`
+  (providers dispose in reverse order). Returns the trigger function for manual invocation; a
+  `timeoutMs` watchdog force-exits if teardown hangs.
+
 ## Composition
 
 Register `log` outermost so it measures and reports everything, then `timing` and `request-id`:

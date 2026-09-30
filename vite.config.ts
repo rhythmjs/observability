@@ -3,6 +3,7 @@ import { defineConfig } from "vite-plus";
 export default defineConfig({
   pack: {
     entry: {
+      "health/health": "src/health/health.ts",
       "log/log": "src/log/log.ts",
       "request-id/request-id": "src/request-id/request-id.ts",
       "timing/timing": "src/timing/timing.ts",

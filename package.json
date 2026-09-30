@@ -1,11 +1,15 @@
 {
   "name": "@rhythmjs/observability",
   "version": "0.0.4",
-  "description": "Observability middleware (logging, request ids, server timing) for Rhythm routers and handlers.",
+  "description": "Observability middleware (logging, request ids, server timing, health checks, graceful shutdown) for Rhythm routers and handlers.",
   "keywords": [
+    "graceful-shutdown",
+    "health-check",
+    "liveness",
     "logging",
     "middleware",
     "observability",
+    "readiness",
     "request-id",
     "rhythm",
     "server-timing"
@@ -21,6 +25,10 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
+    "./health": {
+      "types": "./dist/health/health.d.ts",
+      "default": "./dist/health/health.js"
+    },
     "./log": {
       "types": "./dist/log/log.d.ts",
       "default": "./dist/log/log.js"
