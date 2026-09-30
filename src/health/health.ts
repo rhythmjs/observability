@@ -149,7 +149,6 @@ export function gracefulShutdown(options: GracefulShutdownOptions = {}): () => P
   const timeoutMs = options.timeoutMs ?? 10_000;
   const g = globalThis as {
     process?: { once(event: string, listener: () => void): unknown; exit(code?: number): never };
-    Deno?: { addSignalListener?(signal: string, handler: () => void): void };
   };
   const exit = options.exit ?? g.process !== undefined;
   let started = false;
@@ -174,15 +173,7 @@ export function gracefulShutdown(options: GracefulShutdownOptions = {}): () => P
   };
 
   for (const signal of signals) {
-    if (g.Deno?.addSignalListener !== undefined) {
-      try {
-        g.Deno.addSignalListener(signal, () => void run());
-      } catch {
-        // signal not supported on this platform
-      }
-    } else if (g.process !== undefined) {
-      g.process.once(signal, () => void run());
-    }
+    g.process?.once(signal, () => void run());
   }
 
   return run;
