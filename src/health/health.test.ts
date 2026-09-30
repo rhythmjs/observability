@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vite-plus/test";
+import { describe, expect, test } from "bun:test";
 import { Rhythm } from "@rhythmjs/rhythm";
 import { toFetchHandler } from "@rhythmjs/router/fetch";
 import type { RhythmHttpContext } from "@rhythmjs/router/adapters/context";
