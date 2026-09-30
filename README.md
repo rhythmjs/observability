@@ -2,7 +2,7 @@
 
 Observability middleware for [Rhythm](https://github.com/rhythmjs/rhythm), the Bun-native backend
 framework: request logging, request ids, `Server-Timing`, health endpoints, and graceful shutdown.
-Each module is exported by its own subpath — there is no root barrel export.
+Each module is exported by its own subpath; there is no root barrel export.
 
 ## Install
 
@@ -28,7 +28,7 @@ new RhythmRouter().use(log()).get("/users/:id", (ctx) => {
 - `log(sink)` calls your sink (sync or async) with a structured `LogEntry`:
   `{ method, path, status, duration, error? }`.
 - When downstream throws, the entry is logged with `status: 500` and the `error`, then the error is
-  rethrown — so an exception filter registered outside `log` still sees it.
+  rethrown, so an exception filter registered outside `log` still sees it.
 
 Exported types: `LogEntry`, `LogSink`.
 
@@ -45,7 +45,7 @@ new RhythmRouter().use<RequestIdContext>(requestId()).get("/ping", (ctx) => {
 });
 ```
 
-- `requestId(header?)` — pass a custom header name (default `"x-request-id"`).
+- `requestId(header?)`: pass a custom header name (default `"x-request-id"`).
 
 Exported types: `RequestIdContext`.
 
@@ -63,13 +63,13 @@ new RhythmRouter().use(timing()).get("/ping", (ctx) => {
 // => server-timing: app;dur=1.2
 ```
 
-- `timing(name?)` — pass a custom metric name (default `"app"`). Multiple `timing()` layers append their
+- `timing(name?)`: pass a custom metric name (default `"app"`). Multiple `timing()` layers append their
   metrics instead of replacing each other.
 
 ## `@rhythmjs/observability/health`
 
 Liveness/readiness endpoints and graceful shutdown, built on the Rhythm kernel. The package ships
-**no indicators** — `HealthIndicator` is a contract, and you implement checks against your own
+**no indicators**; `HealthIndicator` is a contract, and you implement checks against your own
 services:
 
 ```ts
@@ -85,23 +85,23 @@ const app = new Rhythm().register(healthModule.forRoot({ indicators: [dbIndicato
 }));
 
 router.use(healthRoutes(healthService).middleware());
-// GET /health/live  → 200 while the process runs (never touches indicators)
+// GET /health/live → 200 while the process runs (never touches indicators)
 // GET /health/ready → 200, or 503 with per-check statuses in the body
 
 gracefulShutdown({ healthService, close: () => server.close(), app });
 ```
 
-- `HealthIndicator` — `{ name, check(), critical?, timeout? }`; `check` returns
+- `HealthIndicator`: `{ name, check(), critical?, timeout? }`; `check` returns
   `{ status: "up" | "down", details? }`, sync or async. A throwing or hanging check reports `down`
   (with the error message, or a per-indicator `timeout` cutoff). `critical: false` shows in the
   report without failing readiness.
-- `healthModule.forRoot({ indicators, timeout?, cacheTtl? })` — a Rhythm module providing
+- `healthModule.forRoot({ indicators, timeout?, cacheTtl? })`: a Rhythm module providing
   `healthService`; export it with `register`'s second argument. Indicators run in parallel; results
   are cached for `cacheTtl` (default 1s) so probe hammering never floods your dependencies.
   `createHealthService(options)` builds the service directly, without the module.
-- `healthRoutes(service, { path? })` — a `RhythmRouter` mounting `/live` and `/ready` under `path`
+- `healthRoutes(service, { path? })`: a `RhythmRouter` mounting `/live` and `/ready` under `path`
   (default `/health`); compose or guard it like any router.
-- `gracefulShutdown({ healthService, close?, app?, signals?, drainMs?, timeoutMs?, exit? })` — on
+- `gracefulShutdown({ healthService, close?, app?, signals?, drainMs?, timeoutMs?, exit? })`: on
   SIGTERM/SIGINT: readiness flips to `503 shuttingDown`, waits
   `drainMs` for load-balancer deregistration, closes the server, then runs the kernel's `teardown()`
   (providers dispose in reverse order). Returns the trigger function for manual invocation; a
@@ -125,7 +125,7 @@ new RhythmRouter()
 
 ```sh
 bun install
-bun test           # bun test runner
-bun run typecheck  # tsc --noEmit
-bun run build      # bun build + tsc declarations
+bun test # bun test runner
+bun run typecheck # tsc --noEmit
+bun run build # bun build + tsc declarations
 ```
