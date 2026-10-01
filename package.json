@@ -1,6 +1,6 @@
 {
   "name": "@rhythmjs/observability",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Observability middleware (logging, request ids, server timing, health checks, graceful shutdown) for Rhythm routers and handlers.",
   "keywords": [
     "graceful-shutdown",
@@ -64,8 +64,8 @@
     "typescript": "^7.0.2"
   },
   "peerDependencies": {
-    "@rhythmjs/rhythm": "^0.0.11",
-    "@rhythmjs/router": "^0.0.11"
+    "@rhythmjs/rhythm": "^0.0.14",
+    "@rhythmjs/router": "^0.0.13"
   },
   "engines": {
     "bun": ">=1.2.0"

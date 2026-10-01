@@ -150,7 +150,9 @@ describe("healthRoutes", () => {
   test("omits indicator details from /ready unless details is enabled", async () => {
     const service = createHealthService({ indicators: [down("db")] });
 
-    const hidden = (await (await serveHealth(service)(new Request("http://localhost/health/ready"))).json()) as HealthReport;
+    const hidden = (await (
+      await serveHealth(service)(new Request("http://localhost/health/ready"))
+    ).json()) as HealthReport;
     expect(hidden.checks.db).toEqual({ status: "down", durationMs: expect.any(Number) });
 
     const shown = await serveHealth(service, undefined, true)(new Request("http://localhost/health/ready"));
