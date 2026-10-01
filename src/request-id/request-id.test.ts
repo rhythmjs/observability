@@ -37,6 +37,21 @@ describe("requestId", () => {
     expect(res.headers.get("x-request-id")).toBe("trace-123");
   });
 
+  test("replaces malformed or oversized incoming ids with a generated one", async () => {
+    const app = serve(
+      new RhythmRouter().use(requestId()).get("/ping", (ctx) => {
+        ctx.response.body = ctx.requestId;
+      }),
+    );
+
+    for (const bad of ["a".repeat(129), "has space", "line\tbreak", "<script>", "caf\u00e9"]) {
+      const res = await app(new Request("http://localhost/ping", { headers: { "x-request-id": bad } }));
+      const id = await res.text();
+      expect(id).not.toBe(bad);
+      expect(id).toMatch(/^[0-9a-f-]{36}$/);
+    }
+  });
+
   test("generates a fresh id per request", async () => {
     const app = serve(
       new RhythmRouter().use(requestId()).get("/ping", (ctx) => {

@@ -20,9 +20,14 @@ const down = (name: string, critical?: boolean): HealthIndicator => ({
   check: () => ({ status: "down", details: { reason: "unreachable" } }),
 });
 
-const serveHealth = (service: ReturnType<typeof createHealthService>, path?: string) =>
+const serveHealth = (service: ReturnType<typeof createHealthService>, path?: string, details?: boolean) =>
   toFetchHandler(
-    new Rhythm<RhythmHttpContext>().use(healthRoutes(service, path === undefined ? {} : { path }).middleware()),
+    new Rhythm<RhythmHttpContext>().use(
+      healthRoutes(service, {
+        ...(path === undefined ? {} : { path }),
+        ...(details === undefined ? {} : { details }),
+      }).middleware(),
+    ),
   );
 
 describe("createHealthService", () => {
@@ -89,6 +94,23 @@ describe("createHealthService", () => {
     expect(calls).toBe(2);
   });
 
+  test("concurrent ready() calls share one in-flight run", async () => {
+    let calls = 0;
+    const slow: HealthIndicator = {
+      name: "db",
+      check: async () => (calls++, await sleep(20), { status: "up" }),
+    };
+    const service = createHealthService({ indicators: [slow], cacheTtl: 0 });
+
+    const reports = await Promise.all([service.ready(), service.ready(), service.ready()]);
+
+    expect(calls).toBe(1);
+    expect(reports[1]).toBe(reports[0]);
+
+    await service.ready();
+    expect(calls).toBe(2);
+  });
+
   test("shutdown flips readiness to down immediately", async () => {
     const service = createHealthService({ indicators: [up("db")] });
     expect((await service.ready()).status).toBe("up");
@@ -123,6 +145,16 @@ describe("healthRoutes", () => {
     const ready = await handler(new Request("http://localhost/health/ready"));
     expect(ready.status).toBe(503);
     expect(((await ready.json()) as HealthReport).checks.db?.status).toBe("down");
+  });
+
+  test("omits indicator details from /ready unless details is enabled", async () => {
+    const service = createHealthService({ indicators: [down("db")] });
+
+    const hidden = (await (await serveHealth(service)(new Request("http://localhost/health/ready"))).json()) as HealthReport;
+    expect(hidden.checks.db).toEqual({ status: "down", durationMs: expect.any(Number) });
+
+    const shown = await serveHealth(service, undefined, true)(new Request("http://localhost/health/ready"));
+    expect(((await shown.json()) as HealthReport).checks.db?.details).toEqual({ reason: "unreachable" });
   });
 
   test("mounts under a custom path", async () => {

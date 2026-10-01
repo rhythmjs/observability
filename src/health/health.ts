@@ -47,6 +47,7 @@ export function createHealthService(options: HealthModuleOptions = {}): HealthSe
   const startedAt = Date.now();
   let shuttingDown = false;
   let cached: { report: HealthReport; expires: number } | null = null;
+  let inflight: Promise<HealthReport> | null = null;
 
   const runIndicator = async (indicator: HealthIndicator): Promise<[string, HealthCheck]> => {
     const start = performance.now();
@@ -93,15 +94,23 @@ export function createHealthService(options: HealthModuleOptions = {}): HealthSe
     ready: async (): Promise<HealthReport> => {
       if (shuttingDown) return { status: "down", shuttingDown: true, checks: {} };
       if (cached !== null && cached.expires > Date.now()) return cached.report;
+      if (inflight !== null) return inflight;
 
-      const entries = await Promise.all(indicators.map(runIndicator));
-      const checks = Object.fromEntries(entries);
-      const down = indicators.some(
-        (indicator) => (indicator.critical ?? true) && checks[indicator.name]?.status === "down",
-      );
-      const report: HealthReport = { status: down ? "down" : "up", shuttingDown: false, checks };
-      cached = { report, expires: Date.now() + cacheTtl };
-      return report;
+      inflight = (async (): Promise<HealthReport> => {
+        try {
+          const entries = await Promise.all(indicators.map(runIndicator));
+          const checks = Object.fromEntries(entries);
+          const down = indicators.some(
+            (indicator) => (indicator.critical ?? true) && checks[indicator.name]?.status === "down",
+          );
+          const report: HealthReport = { status: down ? "down" : "up", shuttingDown: false, checks };
+          if (!shuttingDown) cached = { report, expires: Date.now() + cacheTtl };
+          return report;
+        } finally {
+          inflight = null;
+        }
+      })();
+      return inflight;
     },
     shutdown: () => {
       shuttingDown = true;
@@ -120,16 +129,25 @@ export const healthModule = {
 
 export interface HealthRoutesOptions {
   path?: string;
+  details?: boolean;
+}
+
+function withoutDetails(report: HealthReport): HealthReport {
+  const checks = Object.fromEntries(
+    Object.entries(report.checks).map(([name, { status, durationMs }]) => [name, { status, durationMs }]),
+  );
+  return { ...report, checks };
 }
 
 export function healthRoutes(service: HealthService, options: HealthRoutesOptions = {}): RhythmRouter {
+  const exposeDetails = options.details ?? false;
   return new RhythmRouter({ prefix: options.path ?? "/health" })
     .get("/live", (ctx) => {
       ctx.json(service.live());
     })
     .get("/ready", async (ctx) => {
       const report = await service.ready();
-      ctx.json(report, report.status === "up" ? 200 : 503);
+      ctx.json(exposeDetails ? report : withoutDetails(report), report.status === "up" ? 200 : 503);
     });
 }
 

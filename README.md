@@ -45,7 +45,9 @@ new RhythmRouter().use<RequestIdContext>(requestId()).get("/ping", (ctx) => {
 });
 ```
 
-- `requestId(header?)`: pass a custom header name (default `"x-request-id"`).
+- `requestId(header?)`: pass a custom header name (default `"x-request-id"`). An incoming id is only
+  reused if it matches `^[A-Za-z0-9._-]{1,128}$`; anything else is replaced with a generated UUID so
+  clients cannot inject arbitrary content into your logs.
 
 Exported types: `RequestIdContext`.
 
@@ -86,7 +88,7 @@ const app = new Rhythm().register(healthModule.forRoot({ indicators: [dbIndicato
 
 router.use(healthRoutes(healthService).middleware());
 // GET /health/live → 200 while the process runs (never touches indicators)
-// GET /health/ready → 200, or 503 with per-check statuses in the body
+// GET /health/ready → 200, or 503 with per-check statuses (no details) in the body
 
 gracefulShutdown({ healthService, close: () => server.close(), app });
 ```
@@ -97,10 +99,14 @@ gracefulShutdown({ healthService, close: () => server.close(), app });
   report without failing readiness.
 - `healthModule.forRoot({ indicators, timeout?, cacheTtl? })`: a Rhythm module providing
   `healthService`; export it with `register`'s second argument. Indicators run in parallel; results
-  are cached for `cacheTtl` (default 1s) so probe hammering never floods your dependencies.
+  are cached for `cacheTtl` (default 1s), and concurrent calls share one in-flight run, so probe
+  hammering never floods your dependencies.
   `createHealthService(options)` builds the service directly, without the module.
-- `healthRoutes(service, { path? })`: a `RhythmRouter` mounting `/live` and `/ready` under `path`
-  (default `/health`); compose or guard it like any router.
+- `healthRoutes(service, { path?, details? })`: a `RhythmRouter` mounting `/live` and `/ready` under
+  `path` (default `/health`); compose or guard it like any router. `/ready` returns only each check's
+  `status` and `durationMs`; set `details: true` to include indicator `details` and error messages
+  (they can reveal hosts and connection errors, so only do this behind auth). `service.ready()`
+  always returns the full report for in-process use.
 - `gracefulShutdown({ healthService, close?, app?, signals?, drainMs?, timeoutMs?, exit? })`: on
   SIGTERM/SIGINT: readiness flips to `503 shuttingDown`, waits
   `drainMs` for load-balancer deregistration, closes the server, then runs the kernel's `teardown()`
