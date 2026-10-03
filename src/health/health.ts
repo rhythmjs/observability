@@ -121,9 +121,9 @@ export function createHealthService(options: HealthModuleOptions = {}): HealthSe
 
 export const healthModule = {
   forRoot(options: HealthModuleOptions = {}) {
-    return new Rhythm({ type: "module", name: "health" }).provide(() => ({
-      healthService: createHealthService(options),
-    }));
+    const module = new Rhythm<{}, { healthService: HealthService }>({ type: "module", name: "health" });
+    module.context.healthService = createHealthService(options);
+    return module;
   },
 };
 
@@ -153,7 +153,6 @@ export function healthRoutes(service: HealthService, options: HealthRoutesOption
 
 export interface GracefulShutdownOptions {
   healthService?: HealthService;
-  app?: { teardown(): void | Promise<void> };
   close?: () => void | Promise<void>;
   signals?: string[];
   drainMs?: number;
@@ -184,7 +183,6 @@ export function gracefulShutdown(options: GracefulShutdownOptions = {}): () => P
     options.healthService?.shutdown();
     if (drainMs > 0) await new Promise((resolve) => setTimeout(resolve, drainMs));
     await options.close?.();
-    await options.app?.teardown();
 
     clearTimeout(forceTimer);
     if (exit && g.process !== undefined) g.process.exit(0);

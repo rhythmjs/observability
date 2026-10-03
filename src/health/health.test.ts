@@ -177,7 +177,6 @@ describe("healthModule", () => {
       healthService: m.healthService,
     }));
 
-    await app.setup();
     const ctx = await app.run({});
 
     expect(ctx.healthService.live().status).toBe("up");
@@ -186,13 +185,12 @@ describe("healthModule", () => {
 });
 
 describe("gracefulShutdown", () => {
-  test("drains, closes, and tears down in order, exactly once", async () => {
+  test("drains and closes, exactly once", async () => {
     const order: string[] = [];
     const service = createHealthService();
     const trigger = gracefulShutdown({
       healthService: service,
       close: () => void order.push("close"),
-      app: { teardown: () => void order.push("teardown") },
       signals: [],
       exit: false,
     });
@@ -200,7 +198,7 @@ describe("gracefulShutdown", () => {
     await trigger();
     await trigger();
 
-    expect(order).toEqual(["close", "teardown"]);
+    expect(order).toEqual(["close"]);
     expect(service.isShuttingDown).toBe(true);
   });
 });

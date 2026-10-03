@@ -97,7 +97,7 @@ gracefulShutdown({ healthService, close: () => server.close(), app });
   `{ status: "up" | "down", details? }`, sync or async. A throwing or hanging check reports `down`
   (with the error message, or a per-indicator `timeout` cutoff). `critical: false` shows in the
   report without failing readiness.
-- `healthModule.forRoot({ indicators, timeout?, cacheTtl? })`: a Rhythm module providing
+- `healthModule.forRoot({ indicators, timeout?, cacheTtl? })`: a Rhythm module whose startup context holds
   `healthService`; export it with `register`'s second argument. Indicators run in parallel; results
   are cached for `cacheTtl` (default 1s), and concurrent calls share one in-flight run, so probe
   hammering never floods your dependencies.
@@ -107,11 +107,10 @@ gracefulShutdown({ healthService, close: () => server.close(), app });
   `status` and `durationMs`; set `details: true` to include indicator `details` and error messages
   (they can reveal hosts and connection errors, so only do this behind auth). `service.ready()`
   always returns the full report for in-process use.
-- `gracefulShutdown({ healthService, close?, app?, signals?, drainMs?, timeoutMs?, exit? })`: on
+- `gracefulShutdown({ healthService, close?, signals?, drainMs?, timeoutMs?, exit? })`: on
   SIGTERM/SIGINT: readiness flips to `503 shuttingDown`, waits
-  `drainMs` for load-balancer deregistration, closes the server, then runs the kernel's `teardown()`
-  (providers dispose in reverse order). Returns the trigger function for manual invocation; a
-  `timeoutMs` watchdog force-exits if teardown hangs.
+  `drainMs` for load-balancer deregistration, then calls `close` (stop your server and release resources there). Returns the trigger function for manual invocation; a
+  `timeoutMs` watchdog force-exits if `close` hangs.
 
 ## Composition
 
