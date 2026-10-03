@@ -19,7 +19,7 @@ import { RhythmRouter } from "@rhythmjs/router";
 import { log } from "@rhythmjs/observability/log";
 
 new RhythmRouter().use(log()).get("/users/:id", (ctx) => {
-  ctx.response.body = "ok";
+  ctx.text("ok");
 });
 // => GET /users/7 200 2ms
 ```
@@ -60,7 +60,7 @@ the duration of everything downstream, visible in browser devtools.
 import { timing } from "@rhythmjs/observability/timing";
 
 new RhythmRouter().use(timing()).get("/ping", (ctx) => {
-  ctx.response.body = "pong";
+  ctx.text("pong");
 });
 // => server-timing: app;dur=1.2
 ```
@@ -122,7 +122,7 @@ new RhythmRouter()
   .use(timing())
   .use<RequestIdContext>(requestId())
   .get("/users/:id", (ctx) => {
-    ctx.response.body = ctx.requestId;
+    ctx.text(ctx.requestId);
   });
 ```
 

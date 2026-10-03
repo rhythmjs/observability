@@ -11,7 +11,7 @@ describe("timing", () => {
   test("adds a server-timing header with the total duration", async () => {
     const app = serve(
       new RhythmRouter().use(timing()).get("/ping", (ctx) => {
-        ctx.response.body = "pong";
+        ctx.text("pong");
       }),
     );
 
@@ -24,7 +24,7 @@ describe("timing", () => {
   test("supports a custom metric name", async () => {
     const app = serve(
       new RhythmRouter().use(timing("gateway")).get("/ping", (ctx) => {
-        ctx.response.body = "pong";
+        ctx.text("pong");
       }),
     );
 
@@ -39,7 +39,7 @@ describe("timing", () => {
         .use(timing("total"))
         .use(timing("inner"))
         .get("/ping", (ctx) => {
-          ctx.response.body = "pong";
+          ctx.text("pong");
         }),
     );
 
@@ -54,7 +54,7 @@ describe("timing", () => {
     const app = serve(
       new RhythmRouter().use(timing()).get("/slow", async (ctx) => {
         await new Promise((resolve) => setTimeout(resolve, 25));
-        ctx.response.body = "done";
+        ctx.text("done");
       }),
     );
 

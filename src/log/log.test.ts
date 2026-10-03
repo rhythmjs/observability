@@ -12,8 +12,7 @@ describe("log", () => {
     const entries: LogEntry[] = [];
     const app = serve(
       new RhythmRouter().use(log((entry) => void entries.push(entry))).get("/users/:id", (ctx) => {
-        ctx.response.status = 201;
-        ctx.response.body = "ok";
+        ctx.text("ok", 201);
       }),
     );
 
@@ -33,10 +32,10 @@ describe("log", () => {
       new RhythmRouter()
         .use(log((entry) => void entries.push(entry)))
         .get("/a", (ctx) => {
-          ctx.response.body = "a";
+          ctx.text("a");
         })
         .post("/b", (ctx) => {
-          ctx.response.body = "b";
+          ctx.text("b");
         }),
     );
 
@@ -72,7 +71,7 @@ describe("log", () => {
           }),
         )
         .get("/async", (ctx) => {
-          ctx.response.body = "ok";
+          ctx.text("ok");
         }),
     );
 
